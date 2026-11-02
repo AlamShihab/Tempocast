@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Temperature Forecasting System{% endblock %}</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌡️</text></svg>">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='vendor/plotly.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/common.js') }}"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a class="nav-logo" href="/">🌡️ TFS Dashboard</a>
+            <button class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="nav-menu">☰</button>
+            <ul class="nav-menu" id="nav-menu">
+                <li><a href="/" class="nav-link {% if active == 'dashboard' %}active{% endif %}">Dashboard</a></li>
+                <li><a href="/forecast" class="nav-link {% if active == 'forecast' %}active{% endif %}">Make Forecast</a></li>
+                <li><a href="/model-performance" class="nav-link {% if active == 'performance' %}active{% endif %}">Model Performance</a></li>
+                <li><a href="/data-upload" class="nav-link {% if active == 'upload' %}active{% endif %}">Upload Data</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div id="global-notice" class="notice hidden" role="status"></div>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <p>&copy; {{ year }} Temperature Forecasting System · daily maximum temperature, BMD stations · Flask &amp; ML</p>
+        <p class="footer-path">Pipeline folder: {{ project_dir }}</p>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Data - TFS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Data Upload &amp; Validation</h1>
+    <p class="subtitle">Check a CSV or Excel file against the pipeline's data rules (the same checks as Day 2)</p>
+
+    {% if schema %}
+    <div class="info-card schema-card">
+        <strong>Required columns:</strong> <code>{{ schema.station }}</code> (station name),
+        <code>{{ schema.date }}</code> (date, format <code>{{ schema.date_format }}</code>; also YYYY-MM-DD),
+        <code>{{ schema.value }}</code> (daily maximum temperature, °C) · max {{ schema.max_mb }} MB.
+        Uploading validates the file; adding it to the pipeline and re-running the analysis is a
+        separate, confirmed step.
+    </div>
+    {% endif %}
+
+    <!-- Upload Form -->
+    <section class="upload-form-section">
+        <div class="upload-card form-card">
+            <h2>Upload Data File</h2>
+            <div class="drag-drop-area" id="drag-drop-area" tabindex="0" role="button" aria-label="Choose a CSV or Excel file">
+                <p>📁 Drag and drop your CSV/Excel file here</p>
+                <p class="muted">or click to select</p>
+                <input type="file" id="file-input" accept=".csv,.xlsx" style="display: none;">
+            </div>
+            <div class="file-info" id="file-info" style="display: none;">
+                <p><strong>File:</strong> <span id="file-name">--</span></p>
+                <p><strong>Size:</strong> <span id="file-size">--</span></p>
+            </div>
+            <button id="validate-btn" class="btn btn-primary" disabled>Validate Data</button>
+        </div>
+    </section>
+
+    <!-- Preview -->
+    <section class="preview-section" id="preview-section" style="display: none;">
+        <h2>Data Preview</h2>
+        <div class="table-wrap">
+            <table class="preview-table" id="preview-table">
+                <thead id="preview-head"></thead>
+                <tbody id="preview-body"></tbody>
+            </table>
+        </div>
+        <p class="preview-info" id="preview-info">Showing the first rows of the file</p>
+    </section>
+
+    <!-- Validation Results -->
+    <section class="validation-section" id="validation-section" style="display: none;">
+        <h2>Validation Results</h2>
+
+        <div id="success-card" class="success-card" style="display: none;">
+            <h3 id="success-title">✅ Validation Successful!</h3>
+            <p id="success-message">Your data meets the requirements.</p>
+            <table class="validation-table">
+                <tr><td><strong>Total Rows</strong></td><td id="val-rows">--</td></tr>
+                <tr><td><strong>Date Range</strong></td><td id="val-date-range">--</td></tr>
+                <tr><td><strong>Stations Found</strong></td><td id="val-stations">--</td></tr>
+                <tr><td><strong>Empty Cells</strong></td><td id="val-missing">--</td></tr>
+                <tr><td><strong>Missing Calendar Days</strong></td><td id="val-missing-days">--</td></tr>
+                <tr><td><strong>Saved As</strong></td><td id="val-saved">--</td></tr>
+            </table>
+
+            <div id="warning-block" style="display: none;">
+                <h4>Warnings (data accepted, values flagged)</h4>
+                <ul id="warning-list" class="warning-items"></ul>
+            </div>
+
+            <h4>Empty cells by column</h4>
+            <table class="missing-table" id="missing-table">
+                <thead><tr><th>Column</th><th class="num">Empty cells</th></tr></thead>
+                <tbody id="missing-body"></tbody>
+            </table>
+
+            <div class="action-buttons">
+                <button id="upload-more-btn" class="btn btn-secondary">Upload Another File</button>
+            </div>
+        </div>
+
+        <div id="error-card" class="error-card" style="display: none;" role="alert">
+            <h3>❌ Validation Failed</h3>
+            <p>Your data did not pass validation. Please fix the errors below:</p>
+            <h4>Errors Found:</h4>
+            <ul id="error-list" class="error-list"><li>--</li></ul>
+            <div class="action-buttons">
+                <button id="upload-again-btn" class="btn btn-secondary">Try Again</button>
+            </div>
+        </div>
+
+        <!-- Add the new rows to the pipeline and re-run -->
+        <div id="merge-card" class="info-card mt-lg" style="display: none;">
+            <h3>Add this data to the pipeline</h3>
+            <p id="merge-summary" class="muted">--</p>
+            <table class="validation-table">
+                <tr><td><strong>Rows in your file</strong></td><td id="merge-upload-rows">--</td></tr>
+                <tr><td><strong>New rows to be added</strong></td><td id="merge-new-rows">--</td></tr>
+                <tr><td><strong>Already in the data file</strong></td><td id="merge-present">--</td></tr>
+                <tr><td><strong>Dates being added</strong></td><td id="merge-range">--</td></tr>
+                <tr><td><strong>Stations affected</strong></td><td id="merge-stations">--</td></tr>
+                <tr><td><strong>Data file now</strong></td><td id="merge-current">--</td></tr>
+            </table>
+            <div id="merge-new-stations" class="warning-items" style="display: none;"></div>
+
+            <div id="test-period-block" class="error-card" style="display: none;">
+                <h4>⚠️ These rows extend past the test period</h4>
+                <p id="test-period-text">--</p>
+                <label style="display: flex; gap: .5rem; align-items: flex-start;">
+                    <input type="checkbox" id="extend-test-period">
+                    <span id="extend-test-label">Move the test period forward and run the full re-analysis.</span>
+                </label>
+            </div>
+
+            <h4>How much should be re-computed?</h4>
+            <div id="mode-choices" class="form-group"></div>
+
+            <div class="action-buttons">
+                <button id="apply-btn" class="btn btn-primary">Add rows &amp; run pipeline</button>
+            </div>
+            <p class="section-note">
+                Only rows that are not already present are added. The current data file is saved as a
+                version first, so this can be undone — and if the run fails validation the previous
+                file is put back automatically.
+            </p>
+        </div>
+
+        <div id="nothing-new-card" class="info-card mt-lg" style="display: none;">
+            <h3>Nothing to add</h3>
+            <p id="nothing-new-text" class="muted">Every row in this file is already in the pipeline's data.</p>
+        </div>
+    </section>
+
+    <!-- Pipeline run progress -->
+    <section class="validation-section" id="run-section" style="display: none;">
+        <h2>Pipeline run</h2>
+        <div class="results-card">
+            <p><strong id="run-title">--</strong></p>
+            <p id="run-message" class="muted">--</p>
+            <table class="info-table" id="run-stage-table">
+                <thead><tr><th>Stage</th><th>Status</th><th class="num">Seconds</th></tr></thead>
+                <tbody id="run-stage-body"></tbody>
+            </table>
+            <h4>Latest output</h4>
+            <pre id="run-log" class="preview-info" style="max-height: 14rem; overflow: auto; white-space: pre-wrap;">--</pre>
+            <div class="action-buttons">
+                <button id="run-cancel-btn" class="btn btn-danger" style="display: none;">Stop the run</button>
+                <button id="run-refresh-btn" class="btn btn-secondary">Refresh now</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Current data file and its versions -->
+    <section class="validation-section" id="data-section">
+        <h2>Pipeline data file</h2>
+        <div class="results-card">
+            <table class="validation-table">
+                <tr><td><strong>File</strong></td><td id="data-file">--</td></tr>
+                <tr><td><strong>Rows</strong></td><td id="data-rows">--</td></tr>
+                <tr><td><strong>Stations</strong></td><td id="data-stations">--</td></tr>
+                <tr><td><strong>Covers</strong></td><td id="data-range">--</td></tr>
+                <tr><td><strong>Test period (models are scored on this)</strong></td><td id="data-test-period">--</td></tr>
+            </table>
+            <div class="action-buttons">
+                <button id="rerun-btn" class="btn btn-outline btn-sm">Re-run on this data (no upload)</button>
+            </div>
+
+            <h4>Version history</h4>
+            <div class="table-wrap">
+                <table class="info-table" id="versions-table">
+                    <thead><tr><th>When</th><th>Change</th><th class="num">Rows</th><th></th></tr></thead>
+                    <tbody id="versions-body"><tr><td colspan="4" class="muted">No updates yet.</td></tr></tbody>
+                </table>
+            </div>
+            <p class="section-note">
+                Restoring a version only changes the data file. The website keeps showing the results of
+                the last completed run until you re-run the pipeline.
+            </p>
+        </div>
+    </section>
+
+    <div id="loading-spinner" class="loading-text" style="display: none;"><p>⏳ Validating your data...</p></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+{% endblock %}

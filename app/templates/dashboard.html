@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - TFS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Temperature Forecasting System Dashboard</h1>
+    <p class="subtitle">Daily maximum temperature · machine-learning models vs. baselines on the untouched test period</p>
+
+    <!-- KPI Cards -->
+    <section class="kpi-section" aria-label="Key figures">
+        <div class="kpi-card">
+            <h3>Total Stations</h3>
+            <p class="kpi-value" id="total-stations">--</p>
+            <p class="kpi-label"><span id="forecast-stations">--</span> can be forecast</p>
+        </div>
+        <div class="kpi-card">
+            <h3>Average Test RMSE</h3>
+            <p class="kpi-value" id="avg-rmse">--</p>
+            <p class="kpi-label">°C, production models over all horizons</p>
+        </div>
+        <div class="kpi-card">
+            <h3>Data Period</h3>
+            <p class="kpi-value kpi-value-sm" id="data-period">--</p>
+            <p class="kpi-label">Historical coverage</p>
+        </div>
+        <div class="kpi-card">
+            <h3>Deployed Models</h3>
+            <p class="kpi-value" id="num-models">--</p>
+            <p class="kpi-label" id="audit-label">Audit: --</p>
+        </div>
+    </section>
+
+    <!-- Leaderboard -->
+    <section class="leaderboard-section">
+        <h2>Model Leaderboard by Forecast Horizon</h2>
+        <p class="section-note" id="leaderboard-note">RMSE on the test period <span id="test-period"></span>. The ML model is chosen by cross-validation; it is deployed only if it beats the best baseline.</p>
+        <div class="table-wrap">
+            <table class="leaderboard-table" id="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>Horizon</th>
+                        <th>Best baseline</th>
+                        <th class="num">Baseline RMSE</th>
+                        <th>ML model</th>
+                        <th class="num">ML RMSE</th>
+                        <th class="num">Improvement</th>
+                        <th>Deployed</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-body">
+                    <tr><td colspan="7">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Charts -->
+    <section class="charts-section">
+        <h2>Performance Visualization</h2>
+        <div class="chart-container">
+            <h3>RMSE by horizon: best baseline vs ML model</h3>
+            <div id="rmse-chart" class="chart" role="img" aria-label="Line chart of test RMSE by forecast horizon"></div>
+        </div>
+        <div class="chart-container">
+            <h3>Data coverage by station</h3>
+            <p class="section-note">Share of each station's days that are original BMD observations, filled values (inputs only) or missing.</p>
+            <div id="coverage-chart" class="chart chart-tall" role="img" aria-label="Stacked bar chart of data coverage per station"></div>
+        </div>
+    </section>
+
+    <!-- Data Quality -->
+    <section class="quality-section">
+        <h2>Data Quality Metrics</h2>
+        <div class="quality-grid">
+            <div class="quality-card">
+                <h4>Missing days</h4>
+                <p id="missing-percent">--</p>
+            </div>
+            <div class="quality-card">
+                <h4>Values not in original BMD record</h4>
+                <p id="filled-percent">--</p>
+            </div>
+            <div class="quality-card">
+                <h4>Stations without gaps</h4>
+                <p id="complete-stations">--</p>
+            </div>
+            <div class="quality-card">
+                <h4>Validation status</h4>
+                <p id="validation-status">--</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pipeline figures -->
+    <section class="figures-section" id="figures-section" style="display: none;">
+        <h2>Data Analysis Figures</h2>
+        <p class="section-note">Charts produced by the pipeline (data analysis, baselines, feature importance). Click a figure to open it full size.</p>
+        <div class="figure-grid" id="figure-grid"></div>
+    </section>
+
+    <!-- Downloads -->
+    <section class="downloads-section">
+        <h2>Download Results</h2>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>File</th><th>Contents</th><th class="num">Size (KB)</th><th>Modified</th><th></th></tr></thead>
+                <tbody id="downloads-body"><tr><td colspan="5">Loading...</td></tr></tbody>
+            </table>
+        </div>
+        <button id="downloads-toggle" class="btn-link" style="display: none;"></button>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

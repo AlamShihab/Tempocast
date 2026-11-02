@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Model Performance - TFS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Model Performance Analysis</h1>
+    <p class="subtitle">Test-period metrics of the production models for one station</p>
+
+    <!-- Station Selection -->
+    <section class="station-select-section">
+        <div class="form-card form-row">
+            <div class="form-group">
+                <label for="station-select">Select Station:</label>
+                <select id="station-select" class="form-control">
+                    <option value="">-- Loading stations --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="horizon-select">Horizon for importance &amp; residuals:</label>
+                <select id="horizon-select" class="form-control"></select>
+            </div>
+        </div>
+    </section>
+
+    <!-- Metrics Table -->
+    <section class="metrics-section" id="metrics-section" style="display: none;">
+        <h2>Performance Metrics by Forecast Horizon</h2>
+        <p class="section-note" id="late-note" style="display:none;">This station started reporting late and uses the all-station climatology; its errors are reported separately from established stations.</p>
+        <div class="table-wrap">
+            <table class="metrics-table" id="performance-table">
+                <thead>
+                    <tr>
+                        <th>Horizon</th>
+                        <th>Model</th>
+                        <th class="num">RMSE (°C)</th>
+                        <th class="num">MAE (°C)</th>
+                        <th class="num">R²</th>
+                        <th class="num">Bias (°C)</th>
+                        <th class="num">Skill vs climatology</th>
+                        <th class="num">Test days</th>
+                    </tr>
+                </thead>
+                <tbody id="metrics-body">
+                    <tr><td colspan="8">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="section-note">Skill vs climatology = 1 − RMSE / RMSE of the day-of-year climatology at this station (above 0 = better than the seasonal normal).</p>
+    </section>
+
+    <!-- Charts -->
+    <section class="charts-section" id="charts-section" style="display: none;">
+        <div class="chart-container">
+            <h3>RMSE by forecast horizon</h3>
+            <div id="rmse-chart" class="chart" role="img" aria-label="RMSE by horizon for the station and all stations"></div>
+        </div>
+        <div class="chart-container">
+            <h3>Feature importance (top 10)</h3>
+            <p class="section-note" id="importance-note"></p>
+            <div id="feature-chart" class="chart" role="img" aria-label="Horizontal bar chart of feature importance"></div>
+        </div>
+        <div class="chart-container">
+            <h3>Residuals distribution (forecast − observed)</h3>
+            <div id="residuals-chart" class="chart" role="img" aria-label="Histogram of forecast errors"></div>
+        </div>
+    </section>
+
+    <!-- Model Info -->
+    <section class="model-info-section" id="model-info-section" style="display: none;">
+        <h2>Model Information</h2>
+        <div class="info-card">
+            <table class="info-table">
+                <tr><td>Model Type</td><td id="model-type">--</td></tr>
+                <tr><td>Preprocessing</td><td id="model-profile">--</td></tr>
+                <tr><td>Training Period (forecast origins)</td><td id="training-period">--</td></tr>
+                <tr><td>Test Period</td><td id="test-period">--</td></tr>
+                <tr><td>Number of Features</td><td id="num-features">--</td></tr>
+                <tr><td>Total Training Samples</td><td id="num-samples">--</td></tr>
+            </table>
+        </div>
+    </section>
+
+    <div id="loading" class="loading-text" style="display: none;"><p>Loading station data...</p></div>
+    <div id="error-message" class="error-card" style="display: none;" role="alert"><p class="error-text">--</p></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/models.js') }}"></script>
+{% endblock %}

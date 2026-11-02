@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}{{ code }} {{ title }} - TFS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="error-card">
+        <h3>{{ code }} · {{ title }}</h3>
+        <p>{{ message }}</p>
+        <div class="action-buttons"><a class="btn btn-primary" href="/">Back to dashboard</a></div>
+    </div>
+</div>
+{% endblock %}

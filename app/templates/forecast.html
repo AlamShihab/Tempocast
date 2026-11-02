@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Make Forecast - TFS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Temperature Forecast Generator</h1>
+    <p class="subtitle">Select a station (or all stations) and a forecast horizon to predict the daily maximum temperature, or show every horizon at once</p>
+
+    <!-- Input Form -->
+    <section class="forecast-form-section">
+        <div class="form-card">
+            <h2>Forecast Parameters</h2>
+            <div class="form-group">
+                <label for="station-select">Select Station:</label>
+                <select id="station-select" class="form-control">
+                    <option value="">-- Loading stations --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="horizon-slider">Forecast Horizon (Days):</label>
+                <input type="range" id="horizon-slider" min="0" max="7" value="2" step="1" class="form-control" aria-describedby="horizon-help">
+                <div class="slider-ticks" id="slider-ticks"></div>
+                <p class="slider-value" id="horizon-help">Selected: <span id="horizon-value">3 days</span> ahead · models exist for <span id="horizon-list">--</span> days</p>
+            </div>
+            <div class="btn-row">
+                <button id="generate-btn" class="btn btn-primary">Generate Forecast</button>
+                <button id="outlook-btn" class="btn btn-outline">Show all horizons (15-day outlook)</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- All stations: one horizon, or every horizon -->
+    <section class="forecast-results-section" id="all-section" style="display: none;">
+        <div class="results-card">
+            <h2 id="all-title">All Stations</h2>
+            <p class="section-note" id="all-note">--</p>
+            <div id="all-warnings" class="warning-list"></div>
+
+            <div class="download-section">
+                <button id="all-csv-btn" class="btn btn-primary">📥 Download all stations as CSV</button>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead id="all-head"></thead>
+                    <tbody id="all-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Outlook: every horizon for one station -->
+    <section class="forecast-results-section" id="outlook-section" style="display: none;">
+        <div class="results-card">
+            <h2>15-Day Outlook · <span id="outlook-station">--</span></h2>
+            <p class="section-note">One model per horizon, issued from data up to <span id="outlook-origin">--</span>.
+                The shaded band is the 80% range (± 1.28 × the model's test RMSE); the dashed line is the normal
+                maximum temperature for each date.</p>
+            <div id="outlook-warnings" class="warning-list"></div>
+
+            <div class="chart-container">
+                <h3>Recent data and the outlook</h3>
+                <div id="outlook-chart" class="chart" role="img" aria-label="Recent daily maximum temperature and the forecast for every horizon"></div>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Horizon</th>
+                            <th>Date</th>
+                            <th class="num">Forecast (°C)</th>
+                            <th class="num">80% range (°C)</th>
+                            <th class="num">Normal (°C)</th>
+                            <th>Model</th>
+                            <th class="num">Test RMSE (°C)</th>
+                            <th class="num">vs. best baseline</th>
+                        </tr>
+                    </thead>
+                    <tbody id="outlook-body"></tbody>
+                </table>
+            </div>
+
+            <div class="download-section">
+                <button id="outlook-json-btn" class="btn btn-secondary">📥 Download outlook as JSON</button>
+                <button id="outlook-csv-btn" class="btn btn-secondary">📥 Download outlook as CSV</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results -->
+    <section class="forecast-results-section" id="results-section" style="display: none;">
+        <div class="results-card">
+            <h2>Forecast Results</h2>
+            <div class="results-grid">
+                <div class="result-item"><h4>Station</h4><p id="result-station">--</p></div>
+                <div class="result-item"><h4>Forecast Date</h4><p id="result-date">--</p></div>
+                <div class="result-item"><h4>Forecast Horizon</h4><p id="result-horizon">--</p></div>
+                <div class="result-item"><h4>Model Used</h4><p id="result-model">--</p></div>
+            </div>
+
+            <div class="prediction-box">
+                <h3>Predicted Maximum Temperature</h3>
+                <p class="prediction-value"><span id="prediction-temp">--</span><span class="prediction-unit"> °C</span></p>
+                <p class="prediction-range">80% range: <span id="confidence-range">--</span> °C · normal for this date: <span id="climatology">--</span> °C</p>
+                <p class="prediction-range">Issued from data up to <span id="origin-date">--</span> · confidence: <span id="forecast-confidence">--</span></p>
+            </div>
+
+            <div id="warnings" class="warning-list"></div>
+
+            <div class="metrics-box">
+                <h3>Model Metrics (test period)</h3>
+                <table class="metrics-table">
+                    <tr><td>Model RMSE</td><td id="result-rmse">--</td></tr>
+                    <tr><td>Best baseline RMSE</td><td id="result-baseline">--</td></tr>
+                    <tr><td>Improvement over baseline</td><td id="result-improvement">--</td></tr>
+                </table>
+            </div>
+
+            <div class="chart-container">
+                <h3>Recent observations and forecast</h3>
+                <div id="forecast-chart" class="chart" role="img" aria-label="Recent daily maximum temperature and the forecast"></div>
+            </div>
+
+            <div class="download-section">
+                <button id="download-json-btn" class="btn btn-secondary">📥 Download as JSON</button>
+                <button id="download-csv-btn" class="btn btn-secondary">📥 Download as CSV</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Error -->
+    <section id="error-section" style="display: none;">
+        <div class="error-card" role="alert">
+            <h3>❌ Error</h3>
+            <p id="error-message">--</p>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/forecast.js') }}"></script>
+{% endblock %}

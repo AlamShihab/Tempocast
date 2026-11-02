@@ -1,0 +1,17 @@
+# TFS web app. Install into the TFS project's virtual environment, because the app
+# imports the pipeline code (src/) and loads its trained models:
+#
+#   cd "..\Work with claude"
+#   uv pip install --python .venv\Scripts\python.exe -r "..\app\requirements.txt"
+#   (or: .venv\Scripts\python.exe -m pip install -r "..\app\requirements.txt")
+#
+# The pipeline's own requirements (pandas, numpy, scikit-learn, lightgbm, xgboost,
+# catboost, joblib, pyarrow, ...) come from "Work with claude\requirements.txt".
+Flask>=3.0
+Werkzeug>=3.0
+python-dotenv>=1.0
+openpyxl>=3.1        # .xlsx uploads
+pandas>=2.2
+numpy>=2.0
+pyarrow>=15          # reads the pipeline's parquet files
+pytest>=8            # tests/test_app.py
